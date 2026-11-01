@@ -1,0 +1,127 @@
+{
+  "name": {
+    "zh_CN": "三网回程自动探测",
+    "zh-CN": "三网回程自动探测",
+    "en": "Three-Network Route Autoprobe"
+  },
+  "short": "route-autoprobe",
+  "description": {
+    "zh_CN": "面板服务端 cron 定时向各节点下发 traceroute 探测，自动识别电信/联通/移动三网回程线路并保存快照。节点新挂上即自动纳入探测，无需浏览器保持登录，也不需要手动登录面板。",
+    "zh-CN": "面板服务端 cron 定时向各节点下发 traceroute 探测，自动识别电信/联通/移动三网回程线路并保存快照。节点新挂上即自动纳入探测，无需浏览器保持登录，也不需要手动登录面板。",
+    "en": "Server-side cron that remotely runs traceroute on every node and records telecom/unicom/mobile return routes. New nodes join automatically; no browser session or manual login required."
+  },
+  "author": {
+    "zh_CN": "Xc518600",
+    "zh-CN": "Xc518600",
+    "en": "Xc518600"
+  },
+  "version": "1.0.0",
+  "url": "https://github.com/Xc518600/komari-plugin-route-autoprobe",
+  "komari": ">=1.4.0",
+  "entry": "script.js",
+  "permissions": {
+    "node": true,
+    "allowRoutes": true,
+    "allowSystemRPC": true,
+    "timeout": 60,
+    "maxHTTPBodyBytes": 524288
+  },
+  "configuration": {
+    "type": "managed",
+    "name": {
+      "zh_CN": "三网回程探测配置",
+      "zh-CN": "三网回程探测配置",
+      "en": "Route Autoprobe Configuration"
+    },
+    "data": [
+      {
+        "type": "title",
+        "name": { "zh_CN": "01 · 调度", "zh-CN": "01 · 调度", "en": "01 · Schedule" }
+      },
+      {
+        "key": "enabled",
+        "type": "switch",
+        "default": true,
+        "name": { "zh_CN": "启用自动探测", "zh-CN": "启用自动探测", "en": "Enable autoprobe" },
+        "help": {
+          "zh_CN": "关闭后 cron 仍注册但不执行探测，仅为省资源。",
+          "zh-CN": "关闭后 cron 仍注册但不执行探测，仅为省资源。",
+          "en": "When off, the cron stays registered but does not run."
+        }
+      },
+      {
+        "key": "cronSpec",
+        "type": "string",
+        "default": "17 * * * *",
+        "name": { "zh_CN": "Cron 表达式", "zh-CN": "Cron 表达式", "en": "Cron expression" },
+        "help": {
+          "zh_CN": "五段式 cron。默认每小时第 17 分跑一轮。建议间隔 ≥ 30 分钟，避免频繁远程执行。",
+          "zh-CN": "五段式 cron。默认每小时第 17 分跑一轮。建议间隔 ≥ 30 分钟，避免频繁远程执行。",
+          "en": "Five-field cron. Default runs at minute 17 of every hour. Keep intervals at least 30 minutes."
+        }
+      },
+      {
+        "key": "budgetSeconds",
+        "type": "number",
+        "default": 300,
+        "name": { "zh_CN": "单轮等待上限（秒）", "zh-CN": "单轮等待上限（秒）", "en": "Per-run wait budget (seconds)" },
+        "help": {
+          "zh_CN": "超过此时间未全部返回即结束本轮，已完成的节点照常保存。范围 60-600。",
+          "zh-CN": "超过此时间未全部返回即结束本轮，已完成的节点照常保存。范围 60-600。",
+          "en": "Runs end after this time; finished nodes are still saved. Range 60-600."
+        }
+      },
+      {
+        "key": "maxNodes",
+        "type": "number",
+        "default": 50,
+        "name": { "zh_CN": "单轮最多探测节点数", "zh-CN": "单轮最多探测节点数", "en": "Max nodes per run" },
+        "help": {
+          "zh_CN": "超出部分下一轮再测，避免一次性并发过多远程任务。范围 1-500。",
+          "zh-CN": "超出部分下一轮再测，避免一次性并发过多远程任务。范围 1-500。",
+          "en": "Extra nodes are probed on later runs. Range 1-500."
+        }
+      },
+      {
+        "type": "title",
+        "name": { "zh_CN": "02 · 节点工具", "zh-CN": "02 · 节点工具", "en": "02 · Node Tooling" }
+      },
+      {
+        "key": "autoInstall",
+        "type": "switch",
+        "default": true,
+        "name": { "zh_CN": "自动安装 traceroute", "zh-CN": "自动安装 traceroute", "en": "Install traceroute automatically" },
+        "help": {
+          "zh_CN": "节点缺少 traceroute 且以 root 运行时自动安装（apt/apk/dnf/yum）。这是新机器挂上探针即可出三网回程的关键。",
+          "zh-CN": "节点缺少 traceroute 且以 root 运行时自动安装（apt/apk/dnf/yum）。这是新机器挂上探针即可出三网回程的关键。",
+          "en": "Install traceroute when missing and running as root (apt/apk/dnf/yum). This is what makes new nodes work out of the box."
+        }
+      },
+      {
+        "type": "title",
+        "name": { "zh_CN": "03 · 探测目标", "zh-CN": "03 · 探测目标", "en": "03 · Probe Targets" }
+      },
+      {
+        "key": "targetTelecom",
+        "type": "string",
+        "default": "219.141.140.10",
+        "name": { "zh_CN": "电信目标 IP", "zh-CN": "电信目标 IP", "en": "Telecom target IP" },
+        "help": { "zh_CN": "默认北京电信测速点。", "zh-CN": "默认北京电信测速点。", "en": "Default Beijing Telecom speed-test point." }
+      },
+      {
+        "key": "targetUnicom",
+        "type": "string",
+        "default": "202.106.195.68",
+        "name": { "zh_CN": "联通目标 IP", "zh-CN": "联通目标 IP", "en": "Unicom target IP" },
+        "help": { "zh_CN": "默认北京联通测速点。", "zh-CN": "默认北京联通测速点。", "en": "Default Beijing Unicom speed-test point." }
+      },
+      {
+        "key": "targetMobile",
+        "type": "string",
+        "default": "221.179.155.161",
+        "name": { "zh_CN": "移动目标 IP", "zh-CN": "移动目标 IP", "en": "Mobile target IP" },
+        "help": { "zh_CN": "默认北京移动测速点。", "zh-CN": "默认北京移动测速点。", "en": "Default Beijing Mobile speed-test point." }
+      }
+    ]
+  }
+}
